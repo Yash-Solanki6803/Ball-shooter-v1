@@ -1,22 +1,22 @@
 import { Enemy, Player, Projectile } from "./classes/index.js";
 
+//Canvas setup
 const canvas = document.querySelector("canvas");
-
 export const ctx = canvas.getContext("2d");
-
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
+//Mouse position
 const mouse = {
   x: undefined,
   y: undefined,
 };
-
 addEventListener("mousemove", (event) => {
   mouse.x = event.x;
   mouse.y = event.y;
 });
 
+//Handle window resize
 addEventListener("resize", () => {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
@@ -24,10 +24,12 @@ addEventListener("resize", () => {
   init();
 });
 
+//Player setup
 const x = innerWidth / 2;
 const y = innerHeight / 2;
 const player = new Player(x, y, 10, "white");
 
+//Projectiles and enemies
 const projectiles = [];
 const enemies = [];
 
@@ -54,15 +56,21 @@ function spawnEnemies() {
     enemies.push(new Enemy(x, y, radius, color, velocity));
   }, 800);
 }
+
+//Animation loop
 let animationId;
 function animate() {
   animationId = requestAnimationFrame(animate);
   ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
   ctx.fillRect(0, 0, innerWidth, innerHeight);
+
   player.update();
+
+  //Update and draw projectiles
   for (let projectile of projectiles) {
     projectile.update();
 
+    //Remove projectiles that go off screen
     if (
       projectile.x - projectile.radius < 0 ||
       projectile.x - projectile.radius > canvas.width ||
@@ -74,14 +82,18 @@ function animate() {
       }, 0);
     }
   }
+
+  //Update and draw enemies
   for (let enemy of enemies) {
     enemy.update();
 
+    //Check game over
     const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
     if (dist - enemy.radius - player.radius < 1) {
       cancelAnimationFrame(animationId);
     }
 
+    //Check collision between projectiles and enemies
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
       if (dist - enemy.radius - projectile.radius < 1) {
@@ -94,6 +106,7 @@ function animate() {
   }
 }
 
+//Add Projectile on click
 addEventListener("click", (e) => {
   const angle = Math.atan2(
     e.clientY - canvas.height / 2,
