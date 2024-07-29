@@ -1,79 +1,115 @@
+import { Enemy, Player, Projectile } from "./classes/index.js";
+
 const canvas = document.querySelector("canvas");
 
-const ctx = canvas.getContext("2d");
+export const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
 const mouse = {
   x: undefined,
   y: undefined,
 };
 
-const colors = ["#2185C5", "#7ECEFD", "#FFF6E5", "#FF7F66"];
-
-window.addEventListener("mousemove", (event) => {
+addEventListener("mousemove", (event) => {
   mouse.x = event.x;
   mouse.y = event.y;
 });
 
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+addEventListener("resize", () => {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 
   init();
 });
 
-class Particle {
-  constructor(x, y, radius, color, velocity) {
-    this.x = x;
-    this.y = y;
-    this.radius = radius;
-    this.color = color;
-    this.velocity = velocity;
-  }
+const x = innerWidth / 2;
+const y = innerHeight / 2;
+const player = new Player(x, y, 10, "white");
 
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-  }
+const projectiles = [];
+const enemies = [];
 
-  update() {
-    this.draw();
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
-  }
-}
+function spawnEnemies() {
+  setInterval(() => {
+    const radius = Math.random() * (30 - 10) + 10;
+    let x;
+    let y;
+    if (Math.random() < 0.5) {
+      x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
+      y = Math.random() * canvas.height;
+    } else {
+      x = Math.random() * canvas.width;
+      y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
+    }
 
-let particles;
+    const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
 
-function init() {
-  particles = [];
-
-  for (let i = 0; i < 100; i++) {
-    const radius = Math.random() * 20 + 1;
-    const x = Math.random() * (innerWidth - radius * 2) + radius;
-    const y = Math.random() * (innerHeight - radius * 2) + radius;
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x);
     const velocity = {
-      x: (Math.random() - 0.5) * 5,
-      y: (Math.random() - 0.5) * 5,
+      x: Math.cos(angle),
+      y: Math.sin(angle),
     };
-
-    particles.push(new Particle(x, y, radius, color, velocity));
-  }
+    enemies.push(new Enemy(x, y, radius, color, velocity));
+  }, 800);
 }
-
+let animationId;
 function animate() {
-  requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, innerWidth, innerHeight);
+  animationId = requestAnimationFrame(animate);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+  ctx.fillRect(0, 0, innerWidth, innerHeight);
+  player.update();
+  for (let projectile of projectiles) {
+    projectile.update();
 
-  for (let particle of particles) {
-    particle.update();
+    if (
+      projectile.x - projectile.radius < 0 ||
+      projectile.x - projectile.radius > canvas.width ||
+      projectile.y + projectile.radius < 0 ||
+      projectile.y - projectile.radius > canvas.height
+    ) {
+      setTimeout(() => {
+        projectiles.splice(projectiles.indexOf(projectile), 1);
+      }, 0);
+    }
+  }
+  for (let enemy of enemies) {
+    enemy.update();
+
+    const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+    if (dist - enemy.radius - player.radius < 1) {
+      cancelAnimationFrame(animationId);
+    }
+
+    projectiles.forEach((projectile, projectileIndex) => {
+      const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
+      if (dist - enemy.radius - projectile.radius < 1) {
+        setTimeout(() => {
+          enemies.splice(enemies.indexOf(enemy), 1);
+          projectiles.splice(projectileIndex, 1);
+        }, 0);
+      }
+    });
   }
 }
 
-init();
+addEventListener("click", (e) => {
+  const angle = Math.atan2(
+    e.clientY - canvas.height / 2,
+    e.clientX - canvas.width / 2
+  );
+
+  const velocity = {
+    x: Math.cos(angle) * 20,
+    y: Math.sin(angle) * 20,
+  };
+
+  projectiles.push(
+    new Projectile(canvas.width / 2, canvas.height / 2, 5, "white", velocity)
+  );
+});
+
+// init();
 animate();
+spawnEnemies();
