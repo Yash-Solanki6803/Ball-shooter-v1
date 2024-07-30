@@ -6,13 +6,70 @@
       body {
         margin: 0;
         padding: 0;
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+        background-color: black;
       }
       canvas {
         display: block;
       }
+      .score-card {
+        position: fixed;
+        color: white;
+        margin: 4px 8px;
+        user-select: none;
+      }
+
+      .modal {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.3);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background-color: white;
+        padding: 26px 60px;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        font-size: 32px;
+      }
+
+      #play-btn {
+        padding: 8px 16px;
+        font-size: 16px;
+        background-color: hsl(28, 100%, 50%);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      #play-btn:hover {
+        background-color: hsl(0, 50%, 50%);
+        transition: all 0.3s ease-in;
+      }
     </style>
   </head>
   <body>
+    <!-- Score on top left corner of the screen -->
+    <article class="score-card">
+      <span>SCORE: </span>
+      <span id="score">0</span>
+    </article>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <p>Your score is <span id="final-score">0</span></p>
+        <button id="play-btn">Start Game</button>
+      </div>
+    </div>
     <canvas></canvas>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"

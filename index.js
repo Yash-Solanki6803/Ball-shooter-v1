@@ -5,7 +5,14 @@ const canvas = document.querySelector("canvas");
 export const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
-export const friction = 0.99;
+export const friction = 1;
+let score = 0;
+const scoreElement = document.querySelector("#score");
+const playBtn = document.querySelector("#play-btn");
+const modal = document.querySelector("#modal");
+const finalScore = document.querySelector("#final-score");
+
+let enemySpawnIntervalID;
 
 //Mouse position
 const mouse = {
@@ -21,22 +28,38 @@ addEventListener("mousemove", (event) => {
 addEventListener("resize", () => {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
-
   init();
 });
 
 //Player setup
-const x = innerWidth / 2;
-const y = innerHeight / 2;
-const player = new Player(x, y, 10, "white");
+let x = innerWidth / 2;
+let y = innerHeight / 2;
+let player = new Player(x, y, 10, "white");
 
 //Projectiles, Explosion particles and enemies
-const projectiles = [];
-const particles = [];
-const enemies = [];
+let projectiles = [];
+let particles = [];
+let enemies = [];
+
+function init() {
+  x = innerWidth / 2;
+  y = innerHeight / 2;
+  player = new Player(x, y, 10, "white");
+
+  //Projectiles, Explosion particles and enemies
+  projectiles = [];
+  particles = [];
+  enemies = [];
+  score = 0;
+  scoreElement.innerHTML = score;
+  finalScore.innerHTML = score;
+
+  if (enemySpawnIntervalID) clearInterval(enemySpawnIntervalID);
+}
 
 function spawnEnemies() {
-  setInterval(() => {
+  if (enemySpawnIntervalID) clearInterval(enemySpawnIntervalID);
+  enemySpawnIntervalID = setInterval(() => {
     const radius = Math.random() * (30 - 10) + 10;
     let x;
     let y;
@@ -99,9 +122,11 @@ function animate() {
   for (let enemy of enemies) {
     enemy.update();
 
-    //Check game over
+    //game over
     const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
     if (dist - enemy.radius - player.radius < 1) {
+      modal.style.display = "flex";
+      finalScore.innerHTML = score;
       cancelAnimationFrame(animationId);
     }
 
@@ -126,6 +151,11 @@ function animate() {
         }
 
         if (enemy.radius - 10 > 10) {
+          //Update score
+          score += 10;
+          scoreElement.innerHTML = score;
+
+          //Shrink enemy
           gsap.to(enemy, {
             radius: enemy.radius - 10,
           });
@@ -133,6 +163,11 @@ function animate() {
             projectiles.splice(projectileIndex, 1);
           }, 0);
         } else {
+          //Update score
+          score += 25;
+          scoreElement.innerHTML = score;
+
+          //Remove enemy
           setTimeout(() => {
             enemies.splice(enemies.indexOf(enemy), 1);
             projectiles.splice(projectileIndex, 1);
@@ -160,6 +195,13 @@ addEventListener("click", (e) => {
   );
 });
 
+playBtn.addEventListener("click", () => {
+  init();
+  animate();
+  spawnEnemies();
+  modal.style.display = "none";
+});
+
 // init();
-animate();
-spawnEnemies();
+// animate();
+// spawnEnemies();
