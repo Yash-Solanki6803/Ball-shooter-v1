@@ -1,10 +1,11 @@
-import { Enemy, Player, Projectile } from "./classes/index.js";
+import { Enemy, Player, Projectile, Particle } from "./classes/index.js";
 
 //Canvas setup
 const canvas = document.querySelector("canvas");
 export const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
+export const friction = 0.99;
 
 //Mouse position
 const mouse = {
@@ -29,8 +30,9 @@ const x = innerWidth / 2;
 const y = innerHeight / 2;
 const player = new Player(x, y, 10, "white");
 
-//Projectiles and enemies
+//Projectiles, Explosion particles and enemies
 const projectiles = [];
+const particles = [];
 const enemies = [];
 
 function spawnEnemies() {
@@ -83,6 +85,16 @@ function animate() {
     }
   }
 
+  //Update and draw particles
+  for (let particle of particles) {
+    particle.update();
+    if (particle.alpha <= 0) {
+      setTimeout(() => {
+        particles.splice(particles.indexOf(particle), 1);
+      }, 0);
+    }
+  }
+
   //Update and draw enemies
   for (let enemy of enemies) {
     enemy.update();
@@ -97,10 +109,35 @@ function animate() {
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
       if (dist - enemy.radius - projectile.radius < 1) {
-        setTimeout(() => {
-          enemies.splice(enemies.indexOf(enemy), 1);
-          projectiles.splice(projectileIndex, 1);
-        }, 0);
+        //Spawn particles explosion
+        for (let i = 0; i < enemy.radius * 2; i++) {
+          particles.push(
+            new Particle(
+              projectile.x,
+              projectile.y,
+              Math.random() * 2,
+              enemy.color,
+              {
+                x: (Math.random() - 0.5) * (Math.random() * 8),
+                y: (Math.random() - 0.5) * (Math.random() * 8),
+              }
+            )
+          );
+        }
+
+        if (enemy.radius - 10 > 10) {
+          gsap.to(enemy, {
+            radius: enemy.radius - 10,
+          });
+          setTimeout(() => {
+            projectiles.splice(projectileIndex, 1);
+          }, 0);
+        } else {
+          setTimeout(() => {
+            enemies.splice(enemies.indexOf(enemy), 1);
+            projectiles.splice(projectileIndex, 1);
+          }, 0);
+        }
       }
     });
   }
@@ -114,8 +151,8 @@ addEventListener("click", (e) => {
   );
 
   const velocity = {
-    x: Math.cos(angle) * 20,
-    y: Math.sin(angle) * 20,
+    x: Math.cos(angle) * 9,
+    y: Math.sin(angle) * 9,
   };
 
   projectiles.push(
